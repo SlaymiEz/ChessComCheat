@@ -1,8 +1,12 @@
+from copyreg import pickle
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 import time
+
+from Parser import Parser
+
 
 class Browser:
     def __init__(self):
@@ -49,3 +53,50 @@ class Browser:
         });
         """
         self.driver.execute_script(script)
+
+
+    def opponent_has_played(self, color):
+        script = """
+        const board = document.querySelector("wc-chess-board");
+        const highlightedSquares = [];
+        if (board) {
+            const divs = board.querySelectorAll("div");
+            for (let div of divs) {
+                if (div.style.backgroundColor === "rgb(255, 255, 51)") {
+                    const classes = div.className.split(" ");
+                    for (let cls of classes) {
+                        if (cls.startsWith("square-")) {
+                            highlightedSquares.push(cls.slice(-2));  // Get the last two characters
+                        }
+                    }
+                }
+            }
+        }
+        return highlightedSquares;
+        """
+
+        if self.driver.execute_script(script) is None:
+            return False
+
+        square_numbers = self.driver.execute_script(script)
+
+        for square_number in square_numbers:
+            square_number = Parser.rename_square(square_number)
+            parser = Parser()
+            parser.scan(self.driver.page_source)
+
+            row = int(square_number[0])
+            column = int(square_number[1])
+
+            piece = parser.board[column-1][row-1]
+
+            if color == 'b':
+                if piece.isupper():
+                    print("Enemy played")
+                    return True
+            elif color == 'w':
+                if piece.islower():
+                    print("Enemy played")
+                    return True
+            else:
+                return False

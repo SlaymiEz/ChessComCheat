@@ -37,7 +37,9 @@ class Parser:
             positions.append(" ".join(filtered_classes))
 
         for position in positions:
-            piece, square = position.split() #piece = wr square = square-51
+            cool_list = position.split()
+            normal_list = [cool_list[0], cool_list[1]]
+            piece, square = normal_list #piece = wr square = square-51
             square = re.search(r'\d+', square).group()
 
             piece = self.rename_piece(piece)
